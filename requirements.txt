@@ -1,0 +1,17 @@
+Django==1.9
+django-bootstrap-form==3.2
+django-extensions==1.6.1
+django-filter==0.12.0
+-e git://github.com/ggaurav/django-haystack.git@afe3f6b77b053959f5273f20dffae4e8cedcebac#egg=django_haystack
+django-model-utils==2.4
+djangorestframework==3.3.2
+drf-extensions==0.2.8
+drf-haystack==1.5.6
+MySQL-python==1.2.5
+pefile==1.2.10.post114
+pysolr==3.4.0
+python-dateutil==2.5.0
+python-ptrace==0.8.1
+requests==2.9.1
+six==1.10.0
+ipdb
