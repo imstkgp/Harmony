@@ -16,7 +16,7 @@ Including another URLconf
 from django.conf.urls import url, include
 from django.contrib import admin
 from rest_framework import routers
-from stations.views import FavouriteViewSet, MostPlayedViewSet, Genre, StationDataViewSet
+from stations.views import FavouriteViewSet, MostPlayedViewSet, Genre, StationDataViewSet, autocomplete, ModifyStationViewSet
 from base.views import LanguageViewSet
 router = routers.DefaultRouter()
 router.register(r'station', StationDataViewSet, base_name='station')
@@ -27,4 +27,6 @@ urlpatterns = [
     url(r'^api/favourite/$', FavouriteViewSet),
     url(r'^api/mostplayed/$', MostPlayedViewSet),
     url(r'^api/genre/$', Genre),
+    url(r'^api/station/autocomplete', autocomplete),
+    url(r'^api/updatestation/$', ModifyStationViewSet)
 ]

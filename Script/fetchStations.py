@@ -1,7 +1,7 @@
 import requests
 import json
 token_key = '4b3488b985aa451d20f36cf9e3'
-page = 110
+page = 1
 while True:
     uri = "http://api.dirble.com/v2/stations?token=%s&page=%s" %(token_key, page)
     response = requests.get(uri)
@@ -42,9 +42,9 @@ while True:
             "stream_url": stream,
             "website": station["website"],
             "stationId": station["id"],
-            "categoryId": categoryID,
-            "categoryTitle": categoryTitle,
-            "categoryDescription": categoryDesc
+            "genre_id": categoryID,
+            "genre_name": categoryTitle,
+            "genre_description": categoryDesc
         }
         r = requests.request("POST", url, data=json.dumps(content), headers=headers)
         print "Response from DB write : %s" %r

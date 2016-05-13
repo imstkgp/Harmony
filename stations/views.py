@@ -1,7 +1,7 @@
 from rest_framework import viewsets, mixins
 from rest_framework.response import Response
 from models import Station, Favourite, MostPlayed
-from serializers import FavouriteSerializer, MostPlayedSerializer, StationHayStackSerializer
+from serializers import FavouriteSerializer, MostPlayedSerializer, StationHayStackSerializer, StationSerializer
 from rest_framework.decorators import api_view
 from drf_haystack.viewsets import HaystackViewSet
 from drf_haystack.filters import HaystackFilter
@@ -11,6 +11,12 @@ from rest_framework import exceptions
 from users.models import User, Device
 from itertools import chain
 from django.db.models import F
+from rest_framework.mixins import CreateModelMixin
+from haystack.query import SearchQuerySet
+from base import utils
+from django.http import HttpResponse
+import json
+from django.db.models import Q
 
 #Haystack filter think pagination params are actual query params, so get rid of them
 class PaginatedHayStackFilter(HaystackFilter):
@@ -25,12 +31,17 @@ class PaginatedHayStackFilter(HaystackFilter):
         terms,exclude_terms = super(PaginatedHayStackFilter,self).build_filter(view,filters)
         return terms,exclude_terms
 
-class StationDataViewSet(HaystackViewSet):
+class StationDataViewSet(HaystackViewSet, CreateModelMixin):
     queryset = Station.objects.exclude(active=False).all()
     index_models = [Station]
-    serializer_class = StationHayStackSerializer
     filter_backends = [PaginatedHayStackFilter]
     document_uid_field = 'unique_id'
+
+    def get_serializer_class(self):
+        if self.request.method == 'POST':
+            return StationSerializer
+        else:
+            return StationHayStackSerializer
 
     def list(self, request):
         state, user = get_token_status(request)
@@ -151,3 +162,44 @@ def Genre(request, format=None):
             print e
             return Response({"success":False, "message":"Server error"})
 
+
+@api_view(['GET', 'POST'])
+def ModifyStationViewSet(request, format=None):
+    state, user = get_token_status(request)
+    if user:
+        if request.method == 'GET':
+            snippets = Station.objects.all().values('stationId', 'stream_url')
+            snippets = list(snippets)
+            response = {'success': True, 'count':len(snippets), 'station':snippets}
+            return Response(response)
+
+        elif request.method == 'POST':
+            inactive_ids_list = request.data.get('station_id', [])
+            Station.objects.filter(stationId__in=inactive_ids_list).update(active=False)
+            Station.objects.filter(~Q(stationId__in=inactive_ids_list)).update(active=True)
+            response = {'success': True, 'station':'Stations updated successfully'}
+
+        return Response(response)
+
+def autocomplete(request):
+    default_parameters = ["q", "offset"]
+    offset = int(request.GET.get('offset', 0))
+    limit = 10
+    query = request.GET.get('q', '')
+    extra_filters = {i:j for i,j in request.GET.items() if i not in default_parameters}
+    stations_sqs = SearchQuerySet().models(Station).filter(**extra_filters).autocomplete(name=query)[offset:limit]
+    utils.execute_highlighter(query, "name", stations_sqs)
+    stations = [{
+                      "stationId": result.stationId,
+                      "name": result.name,
+                      "thumb_url": result.thumb_url,
+                      "image_url": result.image_url,
+                      "stream_url": result.stream_url,
+                      "genre_id" : result.genre_id,
+                      "genre_name" : result.genre_name
+                  } for result in stations_sqs]
+    the_data = json.dumps({
+        "q": query,
+        "station": stations
+    })
+    return HttpResponse(the_data, content_type='application/json')

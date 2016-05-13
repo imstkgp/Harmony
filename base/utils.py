@@ -1,4 +1,5 @@
 from model_utils import Choices
+from haystack.utils import Highlighter
 
 class NiceChoices(Choices):
     def __init__(self, *args, **kwargs):
@@ -8,3 +9,12 @@ class NiceChoices(Choices):
     def find(self,i):
         return self._reverse_display_map.get(str(i).lower().replace(" ","_"),0)
 
+
+def execute_highlighter(query, text_key, results):
+    highlight = Highlighter(query)
+    for result in results:
+        highlight.text_block = result.get_additional_fields().get(text_key, "")
+        highlight_locations = highlight.find_highlightable_words()
+        result.highlight_locations = []
+        for q, locations in highlight_locations.iteritems():
+            result.highlight_locations.extend([[location, location + len(q)] for location in locations])

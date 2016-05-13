@@ -12,7 +12,7 @@ class Station(models.Model):
     thumb_url = models.URLField(max_length=500, null=True, blank=True)
     stream_url = models.URLField(max_length=500, null=True, blank=True)
     website = models.CharField(max_length=500, null=True, blank=True)
-    stationId = models.IntegerField(default=0, unique=True)
+    stationId = models.IntegerField(default=0)
     genre_id = models.IntegerField(default=0)
     genre_name = models.CharField(max_length=300, null=True, blank=True)
     genre_description = models.CharField(max_length=1000, null=True, blank=True)
